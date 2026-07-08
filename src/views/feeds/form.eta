@@ -1,0 +1,57 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card narrow-wide">
+  <h1><%= it.feed && it.feed.id ? 'Edit feed' : 'New feed' %></h1>
+  <% if (it.error) { %><p class="error"><%= it.error %></p><% } %>
+  <% var f = it.feed || {} %>
+  <form method="post" action="<%= it.feed && it.feed.id ? '/feeds/' + it.feed.id : '/feeds' %>">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+    <label>Name
+      <input type="text" name="name" value="<%= f.name || '' %>" required />
+    </label>
+    <label>Source feed URL <span class="muted">(the partial/original RSS/Atom feed)</span>
+      <input type="url" name="sourceUrl" value="<%= f.sourceUrl || '' %>" required />
+    </label>
+    <label>Site <span class="muted">(authenticated session to fetch full articles)</span>
+      <select name="siteId">
+        <option value="">— none (fetch unauthenticated) —</option>
+        <% it.sites.forEach(function (s) { %>
+          <option value="<%= s.id %>" <%= f.siteId === s.id ? 'selected' : '' %>><%= s.name %> (<%= s.domain %>)</option>
+        <% }); %>
+      </select>
+    </label>
+    <div class="grid-2">
+      <label>Extraction mode
+        <select name="extractionMode">
+          <option value="readability" <%= f.extractionMode === 'selector' ? '' : 'selected' %>>Readability (automatic)</option>
+          <option value="selector" <%= f.extractionMode === 'selector' ? 'selected' : '' %>>CSS selectors</option>
+        </select>
+      </label>
+      <label>Output format
+        <select name="outputFormat">
+          <option value="rss" <%= f.outputFormat === 'rss' || !f.outputFormat ? 'selected' : '' %>>RSS</option>
+          <option value="atom" <%= f.outputFormat === 'atom' ? 'selected' : '' %>>Atom</option>
+          <option value="json" <%= f.outputFormat === 'json' ? 'selected' : '' %>>JSON Feed</option>
+        </select>
+      </label>
+    </div>
+    <label>Selector config <span class="muted">(JSON; used in selector mode and for browser waits)</span>
+      <textarea name="selectorConfig" rows="4" placeholder='{"contentSelector":"article.post-content","removeSelectors":[".newsletter",".ad"],"waitForSelector":"article","waitMs":500}'><%= f.selectorConfig || '' %></textarea>
+    </label>
+    <div class="grid-2">
+      <label>Refresh interval (minutes)
+        <input type="number" name="refreshIntervalMinutes" min="5" value="<%= f.refreshIntervalMinutes || 60 %>" />
+      </label>
+      <label>Max items
+        <input type="number" name="maxItems" min="1" max="200" value="<%= f.maxItems || 50 %>" />
+      </label>
+    </div>
+    <label class="checkbox">
+      <input type="checkbox" name="enabled" <%= f.enabled === false ? '' : 'checked' %> /> Enabled
+    </label>
+    <div class="row-between">
+      <a class="btn" href="/feeds">Cancel</a>
+      <button class="btn primary" type="submit">Save feed</button>
+    </div>
+  </form>
+</div>
+<%~ include('/partials/footer') %>

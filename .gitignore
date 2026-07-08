@@ -1,0 +1,22 @@
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Env & secrets
+.env
+.env.local
+
+# Runtime data (SQLite DB, session state, article cache)
+data/
+!data/.gitkeep
+
+# Playwright
+playwright-report/
+test-results/
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/

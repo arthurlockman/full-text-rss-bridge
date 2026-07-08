@@ -1,0 +1,49 @@
+# Full-Text RSS Bridge — Linux/Docker deployment.
+#
+# Usage (build locally):
+#   cp .env.example .env      # then edit secrets (SESSION_SECRET, URLs)
+#   docker compose up -d --build
+#
+# Usage (prebuilt image from GitHub Container Registry): replace the `build:`
+# block below with the published image, then `docker compose up -d`:
+#   image: ghcr.io/arthurlockman/full-text-rss-bridge:latest
+#
+# The same image runs locally on this Mac with Apple's `container` CLI — see
+# README.md ("Local build with Apple container").
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        # Keep in sync with the "playwright" version in package.json.
+        PLAYWRIGHT_VERSION: "1.61.1"
+    image: full-text-rss-bridge:latest
+    container_name: full-text-rss-bridge
+    restart: unless-stopped
+    ports:
+      - "8080:8080" # web UI + feed endpoints
+      - "6080:6080" # noVNC client (interactive login capture)
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8080"
+      DATA_DIR: /data
+      # Public URL used when building absolute feed links.
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Required: sign session cookies. Generate: openssl rand -hex 32
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      # Optional: encrypt stored site sessions at rest.
+      SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY:-}
+      # noVNC client URL embedded in the capture page. Point this at the
+      # host/port where port 6080 is reachable from your browser.
+      NOVNC_URL: ${NOVNC_URL:-http://localhost:6080/vnc.html}
+      DISPLAY: ":99"
+      VNC_PORT: "5900"
+      NOVNC_PORT: "6080"
+    volumes:
+      - ftrb-data:/data
+
+volumes:
+  ftrb-data:

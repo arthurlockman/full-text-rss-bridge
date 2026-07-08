@@ -1,0 +1,31 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card narrow-wide">
+  <h1><%= it.site && it.site.id ? 'Edit site' : 'New site' %></h1>
+  <% if (it.error) { %><p class="error"><%= it.error %></p><% } %>
+  <form method="post" action="<%= it.site && it.site.id ? '/sites/' + it.site.id : '/sites' %>">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+    <label>Name
+      <input type="text" name="name" value="<%= it.site ? it.site.name || '' : '' %>" required />
+    </label>
+    <label>Domain <span class="muted">(e.g. defector.com)</span>
+      <input type="text" name="domain" value="<%= it.site ? it.site.domain || '' : '' %>" required />
+    </label>
+    <label>Login URL <span class="muted">(optional — where capture starts)</span>
+      <input type="url" name="loginUrl" value="<%= it.site ? it.site.loginUrl || '' : '' %>" placeholder="https://defector.com/log-in" />
+    </label>
+    <label>Validation URL <span class="muted">(optional — a page only visible when logged in)</span>
+      <input type="url" name="validationUrl" value="<%= it.site ? it.site.validationUrl || '' : '' %>" />
+    </label>
+    <label>Logged-in selector <span class="muted">(optional CSS selector present only when logged in)</span>
+      <input type="text" name="loggedInSelector" value="<%= it.site ? it.site.loggedInSelector || '' : '' %>" placeholder=".account-menu, a[href*='logout']" />
+    </label>
+    <label>Notes
+      <textarea name="notes" rows="2"><%= it.site ? it.site.notes || '' : '' %></textarea>
+    </label>
+    <div class="row-between">
+      <a class="btn" href="/sites">Cancel</a>
+      <button class="btn primary" type="submit">Save site</button>
+    </div>
+  </form>
+</div>
+<%~ include('/partials/footer') %>

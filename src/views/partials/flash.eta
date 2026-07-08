@@ -1,0 +1,2 @@
+<% if (it.query && it.query.msg) { %><p class="ok"><%= it.query.msg %></p><% } %>
+<% if (it.query && it.query.err) { %><p class="error"><%= it.query.err %></p><% } %>

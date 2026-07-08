@@ -1,0 +1,17 @@
+<%~ include('/partials/header', { title: 'Setup', nav: false }) %>
+<div class="card narrow">
+  <h1>Welcome</h1>
+  <p class="muted">Create an admin password to secure this instance.</p>
+  <% if (it.error) { %><p class="error"><%= it.error %></p><% } %>
+  <form method="post" action="/setup">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+    <label>Admin password
+      <input type="password" name="password" autocomplete="new-password" required minlength="8" />
+    </label>
+    <label>Confirm password
+      <input type="password" name="confirm" autocomplete="new-password" required minlength="8" />
+    </label>
+    <button type="submit" class="btn primary">Create account</button>
+  </form>
+</div>
+<%~ include('/partials/footer') %>

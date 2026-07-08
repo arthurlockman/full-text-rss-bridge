@@ -1,0 +1,61 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card">
+  <h1>Dashboard</h1>
+  <div class="stats">
+    <div class="stat"><span class="num"><%= it.sites.length %></span> sites</div>
+    <div class="stat"><span class="num"><%= it.feeds.length %></span> feeds</div>
+    <div class="stat"><span class="num"><%= it.enabled %></span> enabled</div>
+    <div class="stat <%= it.withErrors ? 'bad' : '' %>"><span class="num"><%= it.withErrors %></span> with errors</div>
+  </div>
+  <% if (it.activeCapture) { %>
+    <p class="ok">A capture session is active for <strong><%= it.activeCapture.siteName %></strong> —
+      <a href="/sites/<%= it.activeCapture.siteId %>/capture">open it</a>.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="row-between">
+    <h2>Feeds</h2>
+    <a class="btn primary" href="/feeds/new">Add feed</a>
+  </div>
+  <% if (it.feeds.length === 0) { %>
+    <p class="muted">No feeds yet. <a href="/feeds/new">Create one</a> to get started.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Name</th><th>Last refreshed</th><th>Status</th></tr></thead>
+      <tbody>
+        <% it.feeds.forEach(function (f) { %>
+          <tr>
+            <td><a href="/feeds/<%= f.id %>/articles"><%= f.name %></a></td>
+            <td class="muted"><%= f.lastRefreshedAt ? new Date(f.lastRefreshedAt).toLocaleString() : 'never' %></td>
+            <td><% if (f.lastError) { %><span class="badge error">error</span><% } else { %><span class="badge valid">ok</span><% } %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="row-between">
+    <h2>Sites</h2>
+    <a class="btn" href="/sites/new">Add site</a>
+  </div>
+  <% if (it.sites.length === 0) { %>
+    <p class="muted">No sites yet. Add a subscription site, then capture its login.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Name</th><th>Domain</th><th>Session</th></tr></thead>
+      <tbody>
+        <% it.sites.forEach(function (s) { %>
+          <tr>
+            <td><a href="/sites/<%= s.id %>/edit"><%= s.name %></a></td>
+            <td class="muted"><%= s.domain %></td>
+            <td><span class="badge <%= s.sessionStatus %>"><%= s.sessionStatus %></span></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<%~ include('/partials/footer') %>

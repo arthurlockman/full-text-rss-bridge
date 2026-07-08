@@ -1,0 +1,45 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card">
+  <div class="row-between">
+    <h1>Feeds</h1>
+    <a class="btn primary" href="/feeds/new">Add feed</a>
+  </div>
+  <%~ include('/partials/flash', { query: it.query }) %>
+  <% if (it.feeds.length === 0) { %>
+    <p class="muted">No feeds yet.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Full-text feed URL</th><th>Refresh</th><th>Last</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% it.feeds.forEach(function (f) { %>
+          <% var url = it.baseUrl + '/feed/' + f.accessToken + '.' + f.outputFormat %>
+          <tr>
+            <td><a href="/feeds/<%= f.id %>/articles"><%= f.name %></a><% if (!f.enabled) { %> <span class="badge">disabled</span><% } %></td>
+            <td>
+              <div class="copy-row">
+                <input class="copyable" type="text" readonly value="<%= url %>" onclick="this.select()" />
+              </div>
+            </td>
+            <td class="muted"><%= f.refreshIntervalMinutes %>m</td>
+            <td class="muted"><%= f.lastRefreshedAt ? new Date(f.lastRefreshedAt).toLocaleString() : 'never' %></td>
+            <td><% if (f.lastError) { %><span class="badge error" title="<%= f.lastError %>">error</span><% } else { %><span class="badge valid">ok</span><% } %></td>
+            <td class="actions">
+              <form method="post" action="/feeds/<%= f.id %>/refresh" class="inline">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+                <button class="btn small" type="submit">Refresh</button>
+              </form>
+              <a class="btn small" href="/feeds/<%= f.id %>/edit">Edit</a>
+              <form method="post" action="/feeds/<%= f.id %>/delete" class="inline" onsubmit="return confirm('Delete this feed and its cached articles?')">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<%~ include('/partials/footer') %>

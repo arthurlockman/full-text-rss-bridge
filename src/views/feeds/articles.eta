@@ -1,0 +1,49 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card">
+  <div class="row-between">
+    <h1><%= it.feed.name %></h1>
+    <a class="btn" href="/feeds">Back to feeds</a>
+  </div>
+  <p class="muted">Source: <%= it.feed.sourceUrl %></p>
+
+  <h2>Recent runs</h2>
+  <% if (it.runs.length === 0) { %>
+    <p class="muted">No runs yet.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Started</th><th>Status</th><th>Seen</th><th>Extracted</th><th>Error</th></tr></thead>
+      <tbody>
+        <% it.runs.forEach(function (r) { %>
+          <tr>
+            <td class="muted"><%= new Date(r.startedAt).toLocaleString() %></td>
+            <td><span class="badge <%= r.status === 'error' ? 'error' : 'valid' %>"><%= r.status %></span></td>
+            <td><%= r.itemsSeen %></td>
+            <td><%= r.itemsExtracted %></td>
+            <td class="muted"><%= r.error || '' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>Cached articles (<%= it.articles.length %>)</h2>
+  <% if (it.articles.length === 0) { %>
+    <p class="muted">No articles cached yet. Trigger a refresh from the feeds list.</p>
+  <% } else { %>
+    <% it.articles.forEach(function (a) { %>
+      <details class="article">
+        <summary>
+          <span class="badge <%= a.extractionStatus === 'ok' ? 'valid' : 'error' %>"><%= a.extractionStatus %></span>
+          <strong><%= a.title || '(untitled)' %></strong>
+          <span class="muted"><%= a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : '' %></span>
+        </summary>
+        <p class="muted"><a href="<%= a.url %>" target="_blank" rel="noopener"><%= a.url %></a></p>
+        <% if (a.extractionError) { %><p class="error"><%= a.extractionError %></p><% } %>
+        <% if (a.contentHtml) { %><div class="article-body"><%~ a.contentHtml %></div><% } %>
+      </details>
+    <% }); %>
+  <% } %>
+</div>
+<%~ include('/partials/footer') %>

@@ -1,0 +1,41 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card">
+  <div class="row-between">
+    <h1>Sites</h1>
+    <a class="btn primary" href="/sites/new">Add site</a>
+  </div>
+  <%~ include('/partials/flash', { query: it.query }) %>
+  <p class="muted">A site holds the authenticated session used to fetch full articles. Capture a login or import cookies, then attach the site to a feed.</p>
+  <% if (it.sites.length === 0) { %>
+    <p class="muted">No sites yet.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Domain</th><th>Session</th><th>Validated</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% it.sites.forEach(function (s) { %>
+          <tr>
+            <td><%= s.name %></td>
+            <td class="muted"><%= s.domain %></td>
+            <td><span class="badge <%= s.sessionStatus %>"><%= s.sessionStatus %></span></td>
+            <td class="muted"><%= s.lastValidatedAt ? new Date(s.lastValidatedAt).toLocaleString() : '—' %></td>
+            <td class="actions">
+              <a class="btn small" href="/sites/<%= s.id %>/capture">Capture / import</a>
+              <form method="post" action="/sites/<%= s.id %>/validate" class="inline">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+                <button class="btn small" type="submit">Validate</button>
+              </form>
+              <a class="btn small" href="/sites/<%= s.id %>/edit">Edit</a>
+              <form method="post" action="/sites/<%= s.id %>/delete" class="inline" onsubmit="return confirm('Delete this site?')">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<%~ include('/partials/footer') %>

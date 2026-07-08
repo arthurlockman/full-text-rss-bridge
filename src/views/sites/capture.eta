@@ -1,0 +1,56 @@
+<%~ include('/partials/header', { title: it.title }) %>
+<div class="card">
+  <div class="row-between">
+    <h1>Capture session · <%= it.site.name %></h1>
+    <a class="btn" href="/sites">Back to sites</a>
+  </div>
+  <% if (it.error) { %><p class="error"><%= it.error %></p><% } %>
+
+  <% if (it.active && it.active.siteId === it.site.id) { %>
+    <p class="ok">A login browser is running. Sign in below, then click <strong>Save session</strong>.</p>
+    <% if (it.novncUrl) { %>
+      <div class="vnc-wrap">
+        <iframe class="vnc" src="<%= it.novncUrl %>?autoconnect=true&resize=remote&reconnect=true" title="Login browser"></iframe>
+      </div>
+    <% } else { %>
+      <p class="muted">No <code>NOVNC_URL</code> is configured, so no embedded browser is shown.
+      In local development a native Chromium window opened on the host — sign in there.
+      In Docker, set <code>NOVNC_URL</code> to the noVNC client URL to embed it here.</p>
+    <% } %>
+    <div class="row">
+      <form method="post" action="/capture/<%= it.active.id %>/save" class="inline">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+        <input type="hidden" name="siteId" value="<%= it.site.id %>" />
+        <button class="btn primary" type="submit">Save session</button>
+      </form>
+      <form method="post" action="/capture/<%= it.active.id %>/cancel" class="inline">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+        <input type="hidden" name="siteId" value="<%= it.site.id %>" />
+        <button class="btn danger" type="submit">Cancel</button>
+      </form>
+    </div>
+  <% } else if (it.active) { %>
+    <p class="error">Another capture session is active for
+      <a href="/sites/<%= it.active.siteId %>/capture"><%= it.active.siteName %></a>.
+      Finish or cancel it first.</p>
+  <% } else { %>
+    <p class="muted">Launch a browser to sign in interactively. The captured cookies/session are stored and reused to fetch full articles.</p>
+    <form method="post" action="/sites/<%= it.site.id %>/capture/start">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+      <button class="btn primary" type="submit">Start login browser</button>
+    </form>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>Import cookies / session</h2>
+  <p class="muted">Alternatively, paste a Playwright <code>storageState</code> object, or a cookies array exported from a browser extension (Cookie-Editor, EditThisCookie).</p>
+  <form method="post" action="/sites/<%= it.site.id %>/import">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+    <label>Session JSON
+      <textarea name="session" rows="8" placeholder='{"cookies":[...],"origins":[]}  or  [ { "name": "...", "value": "...", "domain": ".defector.com" } ]'></textarea>
+    </label>
+    <button class="btn" type="submit">Import session</button>
+  </form>
+</div>
+<%~ include('/partials/footer') %>
