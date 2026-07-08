@@ -36,7 +36,11 @@ interface SiteBody {
  */
 function buildNovncSrc(novncUrl: string | undefined): string | null {
   if (!novncUrl) return null;
-  const params = ['autoconnect=true', 'resize=remote', 'reconnect=true'];
+  // `resize=scale` scales the remote framebuffer client-side to fit the iframe,
+  // so the whole desktop is visible without scrolling. (`resize=remote` only
+  // works if the VNC server can resize its framebuffer, which Xvfb/x11vnc here
+  // can't, so it would leave the fixed 1440x900 desktop overflowing the frame.)
+  const params = ['autoconnect=true', 'resize=scale', 'reconnect=true'];
   if (novncUrl.startsWith('/novnc/')) params.push('path=novnc/websockify');
   return `${novncUrl}?${params.join('&')}`;
 }
