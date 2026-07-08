@@ -8,9 +8,9 @@
 
   <% if (it.active && it.active.siteId === it.site.id) { %>
     <p class="ok">A login browser is running. Sign in below, then click <strong>Save session</strong>.</p>
-    <% if (it.novncUrl) { %>
+    <% if (it.novncSrc) { %>
       <div class="vnc-wrap">
-        <iframe class="vnc" src="<%= it.novncUrl %>?autoconnect=true&resize=remote&reconnect=true" title="Login browser"></iframe>
+        <iframe class="vnc" src="<%= it.novncSrc %>" title="Login browser"></iframe>
       </div>
     <% } else { %>
       <p class="muted">No <code>NOVNC_URL</code> is configured, so no embedded browser is shown.

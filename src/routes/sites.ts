@@ -24,6 +24,23 @@ interface SiteBody {
   _csrf?: string;
 }
 
+/**
+ * Builds the embedded noVNC iframe URL with connection query params.
+ *
+ * The bundled noVNC client (v1.3.0) builds a root-relative WebSocket URL of the
+ * form `wss://<host>/<path>` from its `path` setting (default: `websockify`).
+ * When served same-origin behind the `/novnc` reverse proxy, the default would
+ * connect to `/websockify` at the root and bypass the proxy, so we pin
+ * `path=novnc/websockify` to route the upgrade through the proxy. For an
+ * externally hosted noVNC (absolute URL) we leave the default path alone.
+ */
+function buildNovncSrc(novncUrl: string | undefined): string | null {
+  if (!novncUrl) return null;
+  const params = ['autoconnect=true', 'resize=remote', 'reconnect=true'];
+  if (novncUrl.startsWith('/novnc/')) params.push('path=novnc/websockify');
+  return `${novncUrl}?${params.join('&')}`;
+}
+
 export function registerSiteRoutes(app: FastifyInstance): void {
   app.get('/sites', async (req, reply) => {
     const sites = await listSites();
@@ -109,7 +126,7 @@ export function registerSiteRoutes(app: FastifyInstance): void {
         csrf,
         site,
         active: getActiveCapture(),
-        novncUrl: config.NOVNC_URL ?? null,
+        novncSrc: buildNovncSrc(config.NOVNC_URL),
         error: req.query && (req.query as { err?: string }).err,
       }),
     );
