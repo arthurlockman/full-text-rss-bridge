@@ -34,8 +34,9 @@ log "Starting x11vnc on localhost:${VNC_PORT}"
 x11vnc -display "${DISPLAY_NUM}" -localhost -forever -shared -nopw \
   -rfbport "${VNC_PORT}" -quiet -bg
 
-log "Starting noVNC (websockify) on 0.0.0.0:${NOVNC_PORT}"
-websockify --web=/usr/share/novnc "${NOVNC_PORT}" "localhost:${VNC_PORT}" &
+log "Starting noVNC (websockify) on 127.0.0.1:${NOVNC_PORT}"
+# Bound to localhost only — the app reverse-proxies it same-origin under /novnc.
+websockify --web=/usr/share/novnc "127.0.0.1:${NOVNC_PORT}" "localhost:${VNC_PORT}" &
 WEBSOCKIFY_PID=$!
 
 # Forward termination to children so the container stops promptly.

@@ -77,10 +77,9 @@ Pull and run it directly (no local build):
 
 ```bash
 docker run -d --name ftrb \
-  -p 8080:8080 -p 6080:6080 \
+  -p 8080:8080 \
   -v ftrb-data:/data \
   -e SESSION_SECRET="$(openssl rand -hex 32)" \
-  -e NOVNC_URL="http://localhost:6080/vnc.html" \
   ghcr.io/arthurlockman/full-text-rss-bridge:latest
 ```
 
@@ -93,18 +92,21 @@ Ports:
 
 | Port | Purpose |
 |------|---------|
-| `8080` | Web UI + feed endpoints |
-| `6080` | noVNC client for interactive login capture |
+| `8080` | Web UI, feed endpoints, **and** the noVNC capture client (proxied same-origin under `/novnc`) |
 
-Data (SQLite DB, session state, caches) is persisted in the `ftrb-data` Docker
-volume mounted at `/data`.
+`8080` is the only port you need to publish — the interactive capture browser
+(noVNC) is reverse-proxied by the app under `/novnc`, so it rides on the same
+origin and inherits the admin login. Data (SQLite DB, session state, caches) is
+persisted in the `ftrb-data` Docker volume mounted at `/data`.
 
 ### Running behind a reverse proxy (HTTPS)
 
-Terminate TLS at your proxy (Caddy, nginx, Traefik) and forward to port `8080`.
-Set `PUBLIC_BASE_URL=https://your-host` in `.env` so session/CSRF cookies are
-marked `Secure`. Also proxy the noVNC endpoint (`6080`) and set `NOVNC_URL` to
-its externally reachable URL, e.g. `https://your-host/vnc.html`.
+Terminate TLS at your proxy (Caddy, nginx, Traefik) and forward **only** port
+`8080`. Set `PUBLIC_BASE_URL=https://your-host` in `.env` so session/CSRF
+cookies are marked `Secure`. Because noVNC is served same-origin under `/novnc`,
+there's nothing extra to expose — just make sure your proxy forwards WebSocket
+upgrades (most do by default; for nginx add the `Upgrade`/`Connection` headers).
+The default `NOVNC_URL=/novnc/vnc.html` needs no change.
 
 ---
 
@@ -117,10 +119,9 @@ container system start                       # once per boot
 container build -t full-text-rss-bridge:latest .
 
 container run -d --name ftrb \
-  -p 8080:8080 -p 6080:6080 \
+  -p 8080:8080 \
   -v "$PWD/data:/data" \
   -e SESSION_SECRET="$(openssl rand -hex 32)" \
-  -e NOVNC_URL="http://localhost:6080/vnc.html" \
   full-text-rss-bridge:latest
 
 container logs -f ftrb
@@ -143,9 +144,9 @@ See [`.env.example`](./.env.example). Key variables:
 | `DATA_DIR` | `/data` (image) | SQLite DB + session state + caches |
 | `SESSION_SECRET` | — | **Required.** Signs session cookies (`openssl rand -hex 32`) |
 | `SESSION_ENCRYPTION_KEY` | — | Optional. Encrypts stored site sessions at rest |
-| `NOVNC_URL` | — | noVNC client URL embedded in the capture page |
+| `NOVNC_URL` | `/novnc/vnc.html` (image) | noVNC client embedded in the capture page; default is served same-origin by the app |
 | `LOG_LEVEL` | `info` | `fatal`…`trace` |
-| `VNC_PORT` / `NOVNC_PORT` | `5900` / `6080` | Internal VNC / exposed noVNC ports |
+| `VNC_PORT` / `NOVNC_PORT` | `5900` / `6080` | Internal VNC / noVNC ports (localhost-only; not published) |
 | `DISPLAY` | `:99` | X display used by the capture browser |
 
 ---
@@ -167,7 +168,8 @@ Two options:
 - **Interactive (recommended):** open the site's **Capture** page and click
   *Start login browser*. Log in through the embedded noVNC panel — this handles
   2FA and captchas because it's a real browser. Click *Save session* when you're
-  logged in. *(Requires `NOVNC_URL` to be set; in Docker it's wired up for you.)*
+  logged in. *(In Docker this is wired up for you at `/novnc`, gated by your
+  admin login; locally a native Chromium window opens instead.)*
 - **Import cookies/JSON (fallback):** paste either a Playwright `storageState`
   object (`{ cookies, origins }`) or a bare cookies array exported by a browser
   extension such as Cookie-Editor / EditThisCookie.
@@ -246,6 +248,7 @@ Interactive capture needs a display: on Linux/Docker the image runs
 - Feeds are protected only by their unguessable token — treat feed URLs as
   secrets and don't publish them.
 - Stored subscription sessions are sensitive; set `SESSION_ENCRYPTION_KEY` to
-  encrypt them at rest, and keep the noVNC port bound to trusted networks (it is
-  `localhost`-only inside the container and only reachable via the port you
-  publish / proxy).
+  encrypt them at rest. The noVNC endpoint (`x11vnc` runs without a VNC
+  password) is bound to `localhost` inside the container and is only reachable
+  through the app's `/novnc` proxy, which requires the admin login for both the
+  page and the WebSocket — so it is never exposed directly.

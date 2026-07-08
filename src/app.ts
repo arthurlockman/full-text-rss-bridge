@@ -2,11 +2,12 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import fastifyStatic from '@fastify/static';
+import fastifyHttpProxy from '@fastify/http-proxy';
 import { config } from './config.js';
 import { loggerOptions } from './logger.js';
 import { publicDir } from './views.js';
 import { isAuthed } from './http/session.js';
-import { isAdminConfigured } from './services/auth.js';
+import { isAdminConfigured, SESSION_COOKIE, SESSION_VALUE } from './services/auth.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerDashboardRoutes } from './routes/dashboard.js';
 import { registerFeedAdminRoutes } from './routes/feeds-admin.js';
@@ -22,6 +23,22 @@ function isPublicPath(pathname: string): boolean {
     pathname === '/favicon.ico' ||
     pathname.startsWith('/feed/')
   );
+}
+
+/**
+ * Validates the signed admin session cookie from a raw Cookie header. Used to
+ * gate the noVNC WebSocket upgrade, which bypasses the normal request lifecycle.
+ */
+function isSessionCookieValid(app: FastifyInstance, cookieHeader: string | undefined): boolean {
+  if (!cookieHeader) return false;
+  const entry = cookieHeader
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${SESSION_COOKIE}=`));
+  if (!entry) return false;
+  const raw = decodeURIComponent(entry.slice(SESSION_COOKIE.length + 1));
+  const result = app.unsignCookie(raw);
+  return result.valid && result.value === SESSION_VALUE;
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -44,6 +61,26 @@ export async function buildApp(): Promise<FastifyInstance> {
     if (pathname === '/setup') return reply.redirect('/');
     if (pathname === '/login') return; // login page + POST handled by route
     if (!isAuthed(req)) return reply.redirect('/login');
+  });
+
+  // Reverse-proxy the internal noVNC endpoint (websockify) under /novnc so the
+  // interactive capture browser is reachable same-origin through the app —
+  // only port 8080 needs exposing. The HTTP client is gated by the auth guard
+  // above; the WebSocket upgrade (which bypasses hooks) is gated by verifyClient.
+  await app.register(fastifyHttpProxy, {
+    upstream: `http://127.0.0.1:${config.NOVNC_PORT}`,
+    prefix: '/novnc',
+    rewritePrefix: '',
+    websocket: true,
+    wsServerOptions: {
+      verifyClient: (
+        info: { req: { headers: { cookie?: string } } },
+        next: (verified: boolean, code?: number, message?: string) => void,
+      ) => {
+        if (isSessionCookieValid(app, info.req.headers.cookie)) next(true);
+        else next(false, 401, 'Unauthorized');
+      },
+    },
   });
 
   registerHealthRoutes(app);

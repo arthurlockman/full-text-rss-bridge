@@ -22,8 +22,8 @@ services:
     container_name: full-text-rss-bridge
     restart: unless-stopped
     ports:
-      - "8080:8080" # web UI + feed endpoints
-      - "6080:6080" # noVNC client (interactive login capture)
+      # Only one port to publish — noVNC is proxied same-origin under /novnc.
+      - "8080:8080"
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
@@ -36,9 +36,8 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
       # Optional: encrypt stored site sessions at rest.
       SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY:-}
-      # noVNC client URL embedded in the capture page. Point this at the
-      # host/port where port 6080 is reachable from your browser.
-      NOVNC_URL: ${NOVNC_URL:-http://localhost:6080/vnc.html}
+      # Same-origin noVNC path served by the app (no separate port/host needed).
+      NOVNC_URL: ${NOVNC_URL:-/novnc/vnc.html}
       DISPLAY: ":99"
       VNC_PORT: "5900"
       NOVNC_PORT: "6080"

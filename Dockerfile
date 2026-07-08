@@ -42,7 +42,8 @@ ENV NODE_ENV=production \
     DATA_DIR=/data \
     DISPLAY=:99 \
     VNC_PORT=5900 \
-    NOVNC_PORT=6080
+    NOVNC_PORT=6080 \
+    NOVNC_URL=/novnc/vnc.html
 
 # Virtual display + VNC/noVNC stack used by the interactive login capture.
 RUN apt-get update \
@@ -62,8 +63,9 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN mkdir -p /data
 VOLUME ["/data"]
 
-# Web UI + feed endpoints, and the noVNC client for capture.
-EXPOSE 8080 6080
+# Web UI + feed endpoints. noVNC is proxied same-origin under /novnc, so only
+# this one port needs to be published.
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
