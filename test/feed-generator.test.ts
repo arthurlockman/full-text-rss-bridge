@@ -92,4 +92,37 @@ describe('generateFeed', () => {
     const parsed = JSON.parse(out.body);
     expect(parsed.items[0].title).toBe('(untitled)');
   });
+
+  it('links the feed to an explicit source homepage for favicon discovery', () => {
+    const out = generateFeed(feed, articles, 'json', {
+      homepageUrl: 'https://defector.com',
+    });
+    const parsed = JSON.parse(out.body);
+    expect(parsed.home_page_url).toBe('https://defector.com');
+  });
+
+  it('sets the RSS channel link to the source homepage', () => {
+    const out = generateFeed(feed, articles, 'rss', {
+      homepageUrl: 'https://defector.com',
+    });
+    expect(out.body).toContain('<link>https://defector.com</link>');
+  });
+
+  it('exposes the source favicon in the Atom feed icon', () => {
+    const out = generateFeed(feed, articles, 'atom', {
+      homepageUrl: 'https://defector.com',
+    });
+    expect(out.body).toContain('<icon>https://defector.com/favicon.ico</icon>');
+  });
+
+  it('falls back to the first article origin when no homepage is given', () => {
+    const out = generateFeed(feed, [makeArticle({ url: 'https://petapixel.com/a/1' })], 'json');
+    const parsed = JSON.parse(out.body);
+    expect(parsed.home_page_url).toBe('https://petapixel.com');
+  });
+
+  it('omits the guessed favicon when no source homepage can be resolved', () => {
+    const out = generateFeed(feed, [], 'atom');
+    expect(out.body).not.toContain('<icon>');
+  });
 });

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { getFeedArticles } from '../repositories/articles.js';
 import { getFeedByToken } from '../repositories/feeds.js';
+import { getSite } from '../repositories/sites.js';
 import { generateFeed, parseFormat } from '../services/feed-generator.js';
 
 /** Public, token-authenticated full-text feed endpoint. */
@@ -18,7 +19,16 @@ export function registerFeedRoutes(app: FastifyInstance): void {
 
     const format = parseFormat(explicitFormat, feed.outputFormat);
     const articles = await getFeedArticles(feed.id, feed.maxItems);
-    const { body, contentType } = generateFeed(feed, articles, format);
+
+    // Point the feed's website link at the source publication so readers show
+    // its favicon, using the mapped site's domain when available.
+    let homepageUrl: string | undefined;
+    if (feed.siteId) {
+      const site = await getSite(feed.siteId);
+      if (site?.domain) homepageUrl = `https://${site.domain}`;
+    }
+
+    const { body, contentType } = generateFeed(feed, articles, format, { homepageUrl });
 
     return reply
       .header('cache-control', 'public, max-age=300')
