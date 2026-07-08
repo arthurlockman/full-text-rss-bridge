@@ -14,6 +14,7 @@ import { registerFeedAdminRoutes } from './routes/feeds-admin.js';
 import { registerFeedRoutes } from './routes/feeds-public.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerSiteRoutes } from './routes/sites.js';
+import { registerSettingsRoutes } from './routes/settings.js';
 
 /** Paths served without authentication. */
 function isPublicPath(pathname: string): boolean {
@@ -53,13 +54,17 @@ export async function buildApp(): Promise<FastifyInstance> {
     const pathname = req.url.split('?')[0] ?? '/';
     if (isPublicPath(pathname)) return;
 
+    const isSetupPath = pathname === '/setup' || pathname.startsWith('/setup/');
+    const isLoginPath = pathname === '/login' || pathname.startsWith('/login/');
+
     const configured = await isAdminConfigured();
     if (!configured) {
-      if (pathname !== '/setup') return reply.redirect('/setup');
+      // Before any passkey exists, only the setup flow is reachable.
+      if (!isSetupPath) return reply.redirect('/setup');
       return;
     }
-    if (pathname === '/setup') return reply.redirect('/');
-    if (pathname === '/login') return; // login page + POST handled by route
+    if (isSetupPath) return reply.redirect('/');
+    if (isLoginPath) return; // login page + passkey endpoints handled by routes
     if (!isAuthed(req)) return reply.redirect('/login');
   });
 
@@ -89,6 +94,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerDashboardRoutes(app);
   registerSiteRoutes(app);
   registerFeedAdminRoutes(app);
+  registerSettingsRoutes(app);
 
   return app;
 }

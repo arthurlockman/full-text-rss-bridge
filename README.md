@@ -35,13 +35,16 @@ republishes a new full-text feed URL you can subscribe to in any reader.
   in SQLite.
 - **Serving** — `GET /feed/:token` returns RSS (add `.rss`, `.atom`, or `.json`
   to force a format).
+- **Passwordless admin** — the UI is secured with **passkeys** (WebAuthn); add
+  or remove passkeys per device under **Settings**.
 
 ## Tech stack
 
 Node.js + TypeScript · Fastify + Eta + htmx (server-rendered UI) · Playwright
 (Chromium) · Readability + `sanitize-html` · `rss-parser` / `feed` · SQLite via
-Drizzle ORM · `node-cron`. Packaged on the official Playwright image with
-`Xvfb` + `x11vnc` + noVNC for the embedded capture browser.
+Drizzle ORM · `node-cron` · `@simplewebauthn` (passkey auth). Packaged on the
+official Playwright image with `Xvfb` + `x11vnc` + noVNC for the embedded
+capture browser.
 
 ---
 
@@ -58,7 +61,7 @@ $EDITOR .env
 docker compose up -d --build
 ```
 
-Then open <http://localhost:8080> and create your admin password on first run.
+Then open <http://localhost:8080> and register an admin passkey on first run.
 
 ### Prebuilt image (GitHub Container Registry)
 
@@ -103,7 +106,9 @@ persisted in the `ftrb-data` Docker volume mounted at `/data`.
 
 Terminate TLS at your proxy (Caddy, nginx, Traefik) and forward **only** port
 `8080`. Set `PUBLIC_BASE_URL=https://your-host` in `.env` so session/CSRF
-cookies are marked `Secure`. Because noVNC is served same-origin under `/novnc`,
+cookies are marked `Secure` **and** so the passkey Relying Party ID matches the
+hostname you visit (passkeys require HTTPS or `http://localhost`). Because noVNC
+is served same-origin under `/novnc`,
 there's nothing extra to expose — just make sure your proxy forwards WebSocket
 upgrades (most do by default; for nginx add the `Upgrade`/`Connection` headers).
 The default `NOVNC_URL=/novnc/vnc.html` needs no change.
@@ -153,9 +158,17 @@ See [`.env.example`](./.env.example). Key variables:
 
 ## Usage
 
-### 1. First run — create the admin password
-On first visit you'll be prompted to set an admin password. This is the only
-account; the whole UI sits behind it.
+### 1. First run — register a passkey
+On first visit you'll be prompted to register a passkey (Touch ID, Windows
+Hello, a security key, or your phone). There are no passwords — the whole UI
+sits behind your passkey(s). Add or remove passkeys later under **Settings**.
+
+> **Passkeys require a secure context.** Browsers only allow WebAuthn over
+> `https://` or on `http://localhost`. If you access the app over plain
+> `http://` on a LAN IP or hostname, passkey registration/login will be
+> unavailable — put it behind HTTPS (e.g. a reverse proxy) and set
+> `PUBLIC_BASE_URL` to that `https://` URL. The passkey **Relying Party ID** is
+> derived from `PUBLIC_BASE_URL`'s hostname, so it must match the URL you visit.
 
 ### 2. Add a site (the thing you have a login for)
 **Sites → Add site.** Give it a name and domain (e.g. `defector.com`) and,
@@ -243,12 +256,15 @@ Interactive capture needs a display: on Linux/Docker the image runs
 
 ## Security notes
 
-- The UI is protected by a single hashed admin password (argon2) and CSRF
-  double-submit tokens.
+- The UI is protected by **passkeys** (WebAuthn) — no passwords are stored.
+  Only public keys and signature counters are kept; the private keys never
+  leave your devices. Form posts are additionally guarded by CSRF double-submit
+  tokens. Register multiple passkeys (one per device) under **Settings**; the
+  last remaining passkey can't be removed so you don't get locked out.
 - Feeds are protected only by their unguessable token — treat feed URLs as
   secrets and don't publish them.
 - Stored subscription sessions are sensitive; set `SESSION_ENCRYPTION_KEY` to
   encrypt them at rest. The noVNC endpoint (`x11vnc` runs without a VNC
   password) is bound to `localhost` inside the container and is only reachable
-  through the app's `/novnc` proxy, which requires the admin login for both the
+  through the app's `/novnc` proxy, which requires a passkey login for both the
   page and the WebSocket — so it is never exposed directly.

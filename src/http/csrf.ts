@@ -33,3 +33,13 @@ export function verifyCsrf(req: FastifyRequest, submitted: unknown): boolean {
   const unsigned = req.unsignCookie(cookie);
   return unsigned.valid && unsigned.value === submitted;
 }
+
+/**
+ * CSRF verification for JSON/fetch endpoints, where the token is sent via the
+ * `X-CSRF-Token` header instead of a form field.
+ */
+export function verifyCsrfHeader(req: FastifyRequest): boolean {
+  const header = req.headers['x-csrf-token'];
+  const token = Array.isArray(header) ? header[0] : header;
+  return verifyCsrf(req, token);
+}

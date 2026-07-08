@@ -1,17 +1,19 @@
-<%~ include('/partials/header', { title: 'Setup', nav: false }) %>
+<%~ include('/partials/header', { title: 'Setup', nav: false, csrf: it.csrf }) %>
 <div class="card narrow">
   <h1>Welcome</h1>
-  <p class="muted">Create an admin password to secure this instance.</p>
-  <% if (it.error) { %><p class="error"><%= it.error %></p><% } %>
-  <form method="post" action="/setup">
-    <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
-    <label>Admin password
-      <input type="password" name="password" autocomplete="new-password" required minlength="8" />
-    </label>
-    <label>Confirm password
-      <input type="password" name="confirm" autocomplete="new-password" required minlength="8" />
-    </label>
-    <button type="submit" class="btn primary">Create account</button>
-  </form>
+  <p class="muted">Secure this instance with a passkey. Your device (Touch ID,
+    Windows Hello, a security key, or your phone) creates a private key that
+    never leaves it — there's no password to steal or forget.</p>
+  <p class="error" id="passkey-error" hidden></p>
+  <button type="button" class="btn primary" id="passkey-register"
+          data-endpoint-options="/setup/options" data-endpoint-verify="/setup/verify">
+    Create passkey
+  </button>
+  <p class="muted small" id="passkey-unsupported" hidden>
+    This browser doesn't support passkeys. Use a modern browser over HTTPS
+    (or http://localhost).
+  </p>
 </div>
+<script src="/public/vendor/simplewebauthn-browser.umd.min.js"></script>
+<script src="/public/js/passkeys.js" defer></script>
 <%~ include('/partials/footer') %>

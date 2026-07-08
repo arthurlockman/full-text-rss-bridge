@@ -13,7 +13,3 @@ export async function setSetting(key: string, value: string): Promise<void> {
     .values({ key, value, updatedAt: new Date() })
     .onConflictDoUpdate({ target: settings.key, set: { value, updatedAt: new Date() } });
 }
-
-export const SettingKeys = {
-  AdminPasswordHash: 'admin_password_hash',
-} as const;

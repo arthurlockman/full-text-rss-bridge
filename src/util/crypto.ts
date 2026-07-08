@@ -4,20 +4,7 @@ import {
   createHash,
   randomBytes,
 } from 'node:crypto';
-import argon2 from 'argon2';
 import { config } from '../config.js';
-
-export async function hashPassword(password: string): Promise<string> {
-  return argon2.hash(password, { type: argon2.argon2id });
-}
-
-export async function verifyPassword(hash: string, password: string): Promise<boolean> {
-  try {
-    return await argon2.verify(hash, password);
-  } catch {
-    return false;
-  }
-}
 
 const ALGO = 'aes-256-gcm';
 

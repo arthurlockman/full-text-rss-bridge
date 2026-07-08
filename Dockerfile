@@ -18,7 +18,7 @@ FROM mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble AS builder
 WORKDIR /app
 ENV NODE_ENV=development
 
-# Toolchain for native modules (better-sqlite3, argon2).
+# Toolchain for native modules (better-sqlite3).
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*

@@ -1,0 +1,62 @@
+<%~ include('/partials/header', { title: it.title, csrf: it.csrf }) %>
+<div class="card">
+  <h1>Settings</h1>
+  <%~ include('/partials/flash', { query: it.query }) %>
+</div>
+
+<div class="card">
+  <div class="row-between">
+    <h2>Passkeys</h2>
+  </div>
+  <p class="muted">Passkeys are used to log in to this admin UI. Add one per
+    device you want to sign in from. You can't remove your only passkey.</p>
+
+  <% if (it.passkeys.length === 0) { %>
+    <p class="muted">No passkeys registered.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Added</th><th>Last used</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% it.passkeys.forEach(function (p) { %>
+          <tr>
+            <td><%= p.name %><% if (p.backedUp) { %> <span class="badge">synced</span><% } %></td>
+            <td class="muted"><%= new Date(p.createdAt).toLocaleString() %></td>
+            <td class="muted"><%= p.lastUsedAt ? new Date(p.lastUsedAt).toLocaleString() : '—' %></td>
+            <td class="actions">
+              <% if (it.passkeys.length > 1) { %>
+                <form method="post" action="/settings/passkeys/<%= p.id %>/delete" class="inline"
+                      onsubmit="return confirm('Remove this passkey?')">
+                  <input type="hidden" name="_csrf" value="<%= it.csrf %>" />
+                  <button class="btn small danger" type="submit">Remove</button>
+                </form>
+              <% } else { %>
+                <span class="muted small">only passkey</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+
+  <div class="row">
+    <label>New passkey name
+      <input type="text" id="passkey-name" placeholder="e.g. MacBook Touch ID" maxlength="60" />
+    </label>
+  </div>
+  <p class="error" id="passkey-error" hidden></p>
+  <button type="button" class="btn primary" id="passkey-add"
+          data-endpoint-options="/settings/passkeys/options"
+          data-endpoint-verify="/settings/passkeys/verify"
+          data-name-input="passkey-name">
+    Add passkey
+  </button>
+  <p class="muted small" id="passkey-unsupported" hidden>
+    This browser doesn't support passkeys.
+  </p>
+</div>
+<script src="/public/vendor/simplewebauthn-browser.umd.min.js"></script>
+<script src="/public/js/passkeys.js" defer></script>
+<%~ include('/partials/footer') %>

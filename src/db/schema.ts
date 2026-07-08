@@ -11,6 +11,32 @@ export const settings = sqliteTable('settings', {
 });
 
 /**
+ * A registered WebAuthn (passkey) credential used to authenticate the admin.
+ * There is a single logical admin; multiple credentials allow several
+ * devices/passkeys (and backups). Public keys and signature counters are kept
+ * to verify assertions and mitigate replay attacks.
+ */
+export const credentials = sqliteTable('credentials', {
+  id: text('id').primaryKey(),
+  /** Base64URL-encoded raw credential ID reported by the authenticator. */
+  credentialId: text('credential_id').notNull().unique(),
+  /** Base64URL-encoded COSE public key. */
+  publicKey: text('public_key').notNull(),
+  /** Signature counter last seen from the authenticator. */
+  counter: integer('counter').notNull().default(0),
+  /** JSON array of authenticator transports (usb, internal, hybrid, ...). */
+  transports: text('transports'),
+  /** Whether this is a multi-device (synced) passkey. */
+  backedUp: integer('backed_up', { mode: 'boolean' }).notNull().default(false),
+  /** User-supplied friendly label. */
+  name: text('name').notNull().default('Passkey'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+});
+
+/**
  * A subscription site whose authenticated session is used to fetch full
  * articles. `storageState` holds the Playwright storageState JSON (cookies +
  * localStorage), optionally encrypted at rest.
@@ -134,3 +160,5 @@ export type NewArticle = typeof articles.$inferInsert;
 export type Run = typeof runs.$inferSelect;
 export type NewRun = typeof runs.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
+export type Credential = typeof credentials.$inferSelect;
+export type NewCredential = typeof credentials.$inferInsert;

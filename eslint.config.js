@@ -20,4 +20,15 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
+  {
+    // Browser-side scripts served from /public.
+    files: ['src/public/js/**/*.js'],
+    languageOptions: {
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        fetch: 'readonly',
+      },
+    },
+  },
 );

@@ -18,6 +18,19 @@ CREATE TABLE `articles` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `articles_feed_guid_idx` ON `articles` (`feed_id`,`guid`);--> statement-breakpoint
 CREATE INDEX `articles_feed_published_idx` ON `articles` (`feed_id`,`published_at`);--> statement-breakpoint
+CREATE TABLE `credentials` (
+	`id` text PRIMARY KEY NOT NULL,
+	`credential_id` text NOT NULL,
+	`public_key` text NOT NULL,
+	`counter` integer DEFAULT 0 NOT NULL,
+	`transports` text,
+	`backed_up` integer DEFAULT false NOT NULL,
+	`name` text DEFAULT 'Passkey' NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`last_used_at` integer
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `credentials_credential_id_unique` ON `credentials` (`credential_id`);--> statement-breakpoint
 CREATE TABLE `feeds` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,

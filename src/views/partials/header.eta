@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><%= it.title ? it.title + ' · ' : '' %>Full-Text RSS Bridge</title>
+    <% if (it.csrf) { %><meta name="csrf-token" content="<%= it.csrf %>" /><% } %>
     <link rel="stylesheet" href="/public/css/app.css" />
     <script src="/public/vendor/htmx.min.js" defer></script>
   </head>
@@ -15,6 +16,7 @@
         <a href="/">Dashboard</a>
         <a href="/sites">Sites</a>
         <a href="/feeds">Feeds</a>
+        <a href="/settings">Settings</a>
         <form method="post" action="/logout" class="inline">
           <button type="submit" class="linkbtn">Log out</button>
         </form>
