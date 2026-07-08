@@ -13,6 +13,7 @@ import { registerDashboardRoutes } from './routes/dashboard.js';
 import { registerFeedAdminRoutes } from './routes/feeds-admin.js';
 import { registerFeedRoutes } from './routes/feeds-public.js';
 import { registerHealthRoutes } from './routes/health.js';
+import { registerHelpRoutes } from './routes/help.js';
 import { registerSiteRoutes } from './routes/sites.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 
@@ -95,6 +96,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerSiteRoutes(app);
   registerFeedAdminRoutes(app);
   registerSettingsRoutes(app);
+  registerHelpRoutes(app);
 
   return app;
 }

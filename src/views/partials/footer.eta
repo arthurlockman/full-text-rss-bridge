@@ -1,6 +1,8 @@
     </main>
     <footer class="footer">
-      <span>Full-Text RSS Bridge</span>
+      <span>Full-Text RSS Bridge — built by
+        <a href="https://github.com/arthurlockman/full-text-rss-bridge"
+           target="_blank" rel="noopener noreferrer">Arthur Rosa</a></span>
     </footer>
   </body>
 </html>

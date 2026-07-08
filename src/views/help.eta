@@ -1,0 +1,91 @@
+<%~ include('/partials/header', { title: it.title, csrf: it.csrf }) %>
+<div class="card">
+  <h1>Help &amp; usage</h1>
+  <p class="muted">Full-Text RSS Bridge turns a publisher's partial (paywalled)
+    RSS feed into a full-text feed, using a login session you capture yourself.
+    The workflow is: add a site you have a login for, capture its session, then
+    add a feed that fetches and extracts full articles through that session.</p>
+</div>
+
+<div class="card">
+  <h2>1. First run — register a passkey</h2>
+  <p>On first visit you're prompted to register a passkey (Touch ID, Windows
+    Hello, a security key, or your phone). There are no passwords — the whole UI
+    sits behind your passkey(s). Add or remove passkeys later under
+    <a href="/settings">Settings</a>.</p>
+  <blockquote class="note">
+    <strong>Passkeys require a secure context.</strong> Browsers only allow
+    WebAuthn over <code>https://</code> or on <code>http://localhost</code>. If
+    you access the app over plain <code>http://</code> on a LAN IP or hostname,
+    passkey registration/login will be unavailable — put it behind HTTPS (e.g. a
+    reverse proxy) and set <code>PUBLIC_BASE_URL</code> to that
+    <code>https://</code> URL. The passkey <strong>Relying Party ID</strong> is
+    derived from <code>PUBLIC_BASE_URL</code>'s hostname, so it must match the
+    URL you visit.
+  </blockquote>
+</div>
+
+<div class="card">
+  <h2>2. Add a site (the thing you have a login for)</h2>
+  <p><a href="/sites">Sites</a> → <strong>Add site</strong>. Give it a name and
+    domain (e.g. <code>defector.com</code>) and, optionally, a login URL and a
+    "logged-in" selector / validation URL used to detect session expiry.</p>
+</div>
+
+<div class="card">
+  <h2>3. Capture your session</h2>
+  <p>Two options:</p>
+  <ul>
+    <li><strong>Interactive (recommended):</strong> open the site's
+      <strong>Capture</strong> page and click <em>Start login browser</em>. Log
+      in through the embedded noVNC panel — this handles 2FA and captchas
+      because it's a real browser. Click <em>Save session</em> when you're
+      logged in. <span class="muted">(In Docker this is wired up for you at
+      <code>/novnc</code>, gated by your admin login; locally a native Chromium
+      window opens instead.)</span></li>
+    <li><strong>Import cookies/JSON (fallback):</strong> paste either a
+      Playwright <code>storageState</code> object
+      (<code>{ cookies, origins }</code>) or a bare cookies array exported by a
+      browser extension such as Cookie-Editor / EditThisCookie.</li>
+  </ul>
+  <p>The site's session badge turns <strong>valid</strong> once stored.</p>
+</div>
+
+<div class="card">
+  <h2>4. Add a feed</h2>
+  <p><a href="/feeds">Feeds</a> → <strong>Add feed</strong>. Set:</p>
+  <ul>
+    <li><strong>Source URL</strong> — the publisher's existing (partial)
+      RSS/Atom feed.</li>
+    <li><strong>Site</strong> — the authenticated site to fetch article pages
+      with.</li>
+    <li><strong>Extraction mode</strong> — <code>readability</code> (default) or
+      <code>selector</code>.
+      <div>For <code>selector</code>, provide JSON like:</div>
+      <pre><code>{ "contentSelector": "article .post-content",
+  "removeSelectors": [".newsletter-cta", ".related"],
+  "waitForSelector": "article",
+  "waitMs": 500 }</code></pre>
+    </li>
+    <li><strong>Output format</strong> — <code>rss</code>, <code>atom</code>, or
+      <code>json</code>.</li>
+    <li><strong>Refresh interval</strong> and <strong>max items</strong>.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>5. Subscribe</h2>
+  <p>Each feed gets an unguessable token. Subscribe in your reader to:</p>
+  <pre><code><%= it.baseUrl %>/feed/&lt;token&gt;          # default format
+<%= it.baseUrl %>/feed/&lt;token&gt;.rss      # force RSS
+<%= it.baseUrl %>/feed/&lt;token&gt;.atom     # force Atom
+<%= it.baseUrl %>/feed/&lt;token&gt;.json     # force JSON Feed</code></pre>
+  <p>Use <strong>Refresh</strong> to pull immediately, or wait for the
+    scheduler. If a session expires, the site badge flips and you re-capture
+    from the site's Capture page.</p>
+  <blockquote class="note">
+    Feeds are protected only by their unguessable token — treat feed URLs as
+    secrets and don't publish them.
+  </blockquote>
+</div>
+<%~ include('/partials/footer') %>

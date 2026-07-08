@@ -17,6 +17,7 @@
         <a href="/sites">Sites</a>
         <a href="/feeds">Feeds</a>
         <a href="/settings">Settings</a>
+        <a href="/help">Help</a>
         <form method="post" action="/logout" class="inline">
           <button type="submit" class="linkbtn">Log out</button>
         </form>
