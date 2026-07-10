@@ -37,6 +37,33 @@ function resolveHomepage(articles: Article[], explicit?: string): string | undef
   return undefined;
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * Injects a `<dc:creator>` element into each RSS `<item>`.
+ *
+ * The `feed` library only emits an RSS `<author>` when both an email and a name
+ * are present, and it never emits `<dc:creator>` — the element feed readers
+ * (NetNewsWire, Feedbin, …) actually display as the byline. Items are generated
+ * in the same order they are added, which matches `articles`, so we inject each
+ * article's author into the corresponding item by order. The `dc` namespace is
+ * already declared on the `<rss>` root by the library.
+ */
+function injectRssCreators(xml: string, articles: Article[]): string {
+  let index = 0;
+  return xml.replace(/<\/item>/g, (closing) => {
+    const author = articles[index]?.author;
+    index += 1;
+    if (!author) return closing;
+    return `<dc:creator>${escapeXml(author)}</dc:creator>${closing}`;
+  });
+}
+
 /** Builds an RSS/Atom/JSON feed document from cached full-text articles. */
 export function generateFeed(
   feed: Feed,
@@ -86,7 +113,7 @@ export function generateFeed(
   let body: string;
   if (format === 'atom') body = gen.atom1();
   else if (format === 'json') body = gen.json1();
-  else body = gen.rss2();
+  else body = injectRssCreators(gen.rss2(), articles);
 
   return { body, contentType: CONTENT_TYPES[format] };
 }

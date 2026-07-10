@@ -115,6 +115,39 @@ describe('generateFeed', () => {
     expect(out.body).toContain('<icon>https://defector.com/favicon.ico</icon>');
   });
 
+  it('emits a dc:creator byline for RSS items with an author', () => {
+    const out = generateFeed(feed, [makeArticle({ author: 'Sam Mostow' })], 'rss');
+    expect(out.body).toContain('<dc:creator>Sam Mostow</dc:creator>');
+  });
+
+  it('keeps the author in Atom and JSON output', () => {
+    const atom = generateFeed(feed, [makeArticle({ author: 'Sam Mostow' })], 'atom');
+    expect(atom.body).toContain('<name>Sam Mostow</name>');
+    const json = JSON.parse(generateFeed(feed, [makeArticle({ author: 'Sam Mostow' })], 'json').body);
+    expect(json.items[0].author.name).toBe('Sam Mostow');
+  });
+
+  it('aligns dc:creator with the right item and skips authorless ones', () => {
+    const out = generateFeed(
+      feed,
+      [
+        makeArticle({ id: 'a1', guid: 'g1', url: 'https://x/1', author: 'First Writer' }),
+        makeArticle({ id: 'a2', guid: 'g2', url: 'https://x/2', author: null }),
+        makeArticle({ id: 'a3', guid: 'g3', url: 'https://x/3', author: 'Third Writer' }),
+      ],
+      'rss',
+    );
+    const items = out.body.split('</item>');
+    expect(items[0]).toContain('First Writer');
+    expect(items[1]).not.toContain('dc:creator');
+    expect(items[2]).toContain('Third Writer');
+  });
+
+  it('escapes XML special characters in the dc:creator byline', () => {
+    const out = generateFeed(feed, [makeArticle({ author: 'A & B <C>' })], 'rss');
+    expect(out.body).toContain('<dc:creator>A &amp; B &lt;C&gt;</dc:creator>');
+  });
+
   it('falls back to the first article origin when no homepage is given', () => {
     const out = generateFeed(feed, [makeArticle({ url: 'https://petapixel.com/a/1' })], 'json');
     const parsed = JSON.parse(out.body);
